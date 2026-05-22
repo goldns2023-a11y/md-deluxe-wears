@@ -4,247 +4,157 @@ const express = require("express");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
+const AWS = require("aws-sdk");
 
 const Product = require("./models/Product.js");
 
 const app = express();
 
+/* =========================
+   MIDDLEWARE
+========================= */
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  express.urlencoded({
-    extended: true
-  })
-);
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use(
-  "/uploads",
-  express.static(
-    path.join(__dirname, "uploads")
-  )
-);
-
-app.use(
-  express.static(
-    path.join(__dirname, "public")
-  )
-);
+/* =========================
+   MONGODB
+========================= */
 
 mongoose.connect(process.env.MONGO_URI)
-
-.then(() => {
-
-  console.log("MongoDB Atlas Connected");
-
-})
-
-.catch(err => {
-
-  console.log("Mongo Error:", err);
-
-});
-
-
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log("Mongo Error:", err));
 
 /* =========================
-   MULTER STORAGE
+   AWS S3 CONFIG (SDK v2)
 ========================= */
 
-const storage = multer.diskStorage({
-
-  destination: (req, file, cb) => {
-
-    cb(null, "uploads");
-
-  },
-
-  filename: (req, file, cb) => {
-
-    cb(
-      null,
-      Date.now() + "-" + file.originalname
-    );
-
-  }
-
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_KEY,
+  region: process.env.AWS_REGION
 });
 
-const upload = multer({
-  storage
-});
-
-
+const s3 = new AWS.S3();
 
 /* =========================
-   CREATE PRODUCT
+   MULTER (memory storage)
 ========================= */
 
-app.post(
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-  "/api/products",
+/* =========================
+   CREATE PRODUCT (UPLOAD TO S3)
+========================= */
 
-  upload.single("image"),
-
-  async (req, res) => {
-
-    try {
-
-      if (!req.file) {
-
-        return res
-        .status(400)
-        .json({
-          success: false,
-          message: "No image uploaded"
-        });
-
-      }
-
-      const product = new Product({
-
-        title: req.body.title,
-
-        description: req.body.description,
-
-        price: req.body.price,
-
-        sizes: req.body.sizes,
-
-        section: req.body.section,
-
-        image: "/uploads/" + req.file.filename
-
+app.post("/api/products", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image uploaded"
       });
-
-      await product.save();
-
-      res.json({
-
-        success: true,
-        message: "Uploaded successfully"
-
-      });
-
     }
 
-    catch (err) {
+    const fileName = Date.now() + "-" + req.file.originalname;
 
-      console.log(err);
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: fileName,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype,
+      ACL: "public-read"
+    };
 
-      res.status(500).json({
+    const uploadResult = await s3.upload(params).promise();
 
-        success: false
+    const product = new Product({
+      title: req.body.title,
+      description: req.body.description,
+      price: req.body.price,
+      sizes: req.body.sizes,
+      section: req.body.section,
+      image: uploadResult.Location // FULL S3 URL
+    });
 
-      });
+    await product.save();
 
-    }
+    res.json({
+      success: true,
+      message: "Uploaded successfully"
+    });
 
+  } catch (err) {
+    console.log("Upload Error:", err);
+    res.status(500).json({ success: false });
   }
-
-);
-
-
+});
 
 /* =========================
    GET ALL PRODUCTS
 ========================= */
 
-app.get(
-
-  "/api/products",
-
-  async (req, res) => {
-
-    try {
-
-      const products = await Product.find()
-      .sort({ _id: -1 });
-
-      res.json(products);
-
-    }
-
-    catch (err) {
-
-      res.status(500).json(err);
-
-    }
-
+app.get("/api/products", async (req, res) => {
+  try {
+    const products = await Product.find().sort({ _id: -1 });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json(err);
   }
-
-);
-
-
+});
 
 /* =========================
-   DELETE PRODUCT
+   DELETE PRODUCT (REMOVE FROM S3 + DB)
 ========================= */
 
-app.delete(
+app.delete("/api/products/:id", async (req, res) => {
+  try {
 
-  "/api/products/:id",
+    const product = await Product.findById(req.params.id);
 
-  async (req, res) => {
-
-    try {
-
-      const product = await Product.findById(req.params.id);
-
-      if (!product) {
-
-        return res.status(404).json({
-
-          success: false,
-          message: "Product not found"
-
-        });
-
-      }
-
-      /* DELETE IMAGE FILE */
-
-      const imagePath = path.join(
-        __dirname,
-        product.image
-      );
-
-      if (fs.existsSync(imagePath)) {
-
-        fs.unlinkSync(imagePath);
-
-      }
-
-      /* DELETE FROM DATABASE */
-
-      await Product.findByIdAndDelete(req.params.id);
-
-      res.json({
-
-        success: true,
-        message: "Deleted successfully"
-
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
       });
-
     }
 
-    catch (err) {
+    /* =========================
+       FIXED S3 DELETE LOGIC
+    ========================= */
 
-      console.log(err);
+    const imageUrl = product.image;
 
-      res.status(500).json({
+    // extract filename safely
+    const urlParts = imageUrl.split("/");
+    const Key = urlParts[urlParts.length - 1];
 
-        success: false
+    await s3.deleteObject({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: Key
+    }).promise();
 
-      });
+    /* DELETE FROM DATABASE */
 
-    }
+    await Product.findByIdAndDelete(req.params.id);
 
+    res.json({
+      success: true,
+      message: "Deleted successfully"
+    });
+
+  } catch (err) {
+    console.log("Delete Error:", err);
+    res.status(500).json({ success: false });
   }
+});
 
-);
-
-
+/* =========================
+   START SERVER
+========================= */
 
 const PORT = process.env.PORT || 3000;
 
