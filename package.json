@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "product.js",
   "dependencies": {
+    "aws-sdk": "^2.1693.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.22.2",
-    "mongoose": "^5.13.23",
-    "multer": "^1.4.4"
+    "mongoose": "^5.13.23"
   },
   "devDependencies": {},
   "scripts": {
