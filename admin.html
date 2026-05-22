@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD Deluxe Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+body{
+background:#0b0b0b;
+color:white;
+padding:20px;
+font-family:Poppins,Arial,sans-serif;
+}
+
+
+h1{
+text-align:center;
+color:#C6A962;
+font-size:22px;
+}
+
+.gradient-text {
+      background: linear-gradient(90deg, #a87732, #6e4a13, #3e210e, #6e4a13, #6b4a1f, #452c04, #fff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+
+.brand-flyer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .brand-flyer img {
+      width: 50%;
+      height: auto;
+      border: 0px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px inset rgba(0, 0, 255, 0.01);
+ }
+
+
+.admin-container{
+display:flex;
+flex-direction:column;
+max-width:800px;
+margin:30px auto;
+background:#1a1a1a;
+padding:20px;
+border:1px solid #6e4a13;
+border-radius:8px;
+}
+
+form{
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+input,
+select,
+textarea{
+padding:12px;
+background:#0b0b0b;
+color:white;
+border:1px solid #6e4a13;
+border-radius:4px;
+outline:none;
+width:100%;
+box-sizing:border-box;
+}
+
+button{
+padding:14px;
+background:#C6A962;
+color:black;
+font-weight:bold;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+button:hover{
+background:#b99748;
+}
+
+hr{
+margin:25px 0;
+border-color:#6e4a13;
+}
+
+/* TABLE */
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:25px;
+}
+
+th,td{
+padding:10px;
+text-align:left;
+border:1px solid #333;
+}
+
+th{
+background:#6e4a13;
+}
+
+tr:nth-child(even){
+background:#141414;
+}
+
+.action-btn{
+background:transparent;
+border:none;
+color:#C6A962;
+cursor:pointer;
+font-weight:bold;
+}
+
+.action-btn:hover{
+color:black;
+}
+
+/* MOBILE */
+
+@media(max-width:480px){
+
+body{
+padding:10px;
+}
+
+
+.brand-flyer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .brand-flyer img {
+      width: 105%;
+      height: auto;
+      border: 0px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px inset rgba(0, 0, 255, 0.01);
+ }
+
+.admin-container{
+max-width:100%;
+padding:15px;
+}
+
+
+/* 🔥 Responsive table styling */
+  table, thead, tbody, th, td, tr {
+    display: block;
+    width: 100%;
+  }
+
+  table {
+    border: none;
+    transform: translateX(-10px);
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    margin-bottom: 15px;
+    border: 1px solid #6e4a13;
+    border-radius: 5px;
+    padding: 10px;
+    background: #141414;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 5px;
+    text-align: left;
+    transform: translateX(-5px);
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #C6A962;
+  }
+
+  .action-btn {
+    background: #b99748;
+    color: #000;
+    border: none;
+    cursor: pointer;
+  }
+
+  .action-btn:hover {
+    color: #fff;
+  }
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+	<!-- LOGIN LOCK SCREEN -->
+<div id="lockScreen" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#0b0b0b;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+z-index:99999;
+">
+
+<h2 style="color:#C6A962;margin-bottom:20px;">
+MD DELUXE ADMIN LOGIN
+</h2>
+
+<input id="passwordInput"
+type="password"
+placeholder="Enter Password"
+style="
+padding:12px;
+width:250px;
+border:1px solid #6e4a13;
+background:#111;
+color:white;
+border-radius:6px;
+outline:none;
+text-align:center;
+">
+
+<button onclick="checkPassword()"
+style="
+margin-top:15px;
+padding:12px 25px;
+background:#C6A962;
+border:none;
+font-weight:bold;
+cursor:pointer;
+border-radius:6px;
+">
+ENTER
+</button>
+
+<p id="errorMsg" style="color:red;margin-top:10px;"></p>
+
+</div>
+
+<h1 class="gradient-text">👔 MD DELUXE ADMIN PANEL</h1>
+
+<div class="brand-flyer"><img src="deluxe.png"></div>
+
+<div class="admin-container">
+
+<form id="form">
+
+<input name="title"
+placeholder="Title"
+required>
+
+<textarea
+name="description"
+placeholder="Description"></textarea>
+
+<input
+name="price"
+placeholder="NGN 85000">
+
+<input
+name="sizes"
+placeholder="S-3XL">
+
+<select name="section">
+
+<option>KAFTAN</option>
+<option>SENATOR</option>
+<option>POLO</option>
+
+</select>
+
+<input type="file"
+name="image"
+required>
+
+<button>
+UPLOAD
+</button>
+
+</form>
+
+<hr>
+
+<h2 style="color:#C6A962">
+All Collections
+</h2>
+
+<table id="clothTable">
+
+<thead>
+<tr>
+<th>Image</th>
+<th>Title</th>
+<th>Description</th>
+<th>Price</th>
+<th>Size</th>
+<th>Category</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+<!-- Items appear here -->
+
+<tr>
+
+<td data-label="Image">
+No image
+</td>
+
+<td data-label="Title">
+—
+</td>
+
+<td data-label="Description">
+—
+</td>
+
+<td data-label="Price">
+—
+</td>
+
+<td data-label="Size">
+—
+</td>
+
+<td data-label="Category">
+—
+</td>
+
+
+<td data-label="Actions">
+<button class="action-btn">
+Edit <i class="fa fa-pen"></i>
+</button>
+
+<button class="action-btn">
+Delete <i class="fa fa-trash"></i>
+</button>
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+
+<script>
+
+const form =
+document.getElementById("form");
+
+const tableBody =
+document.querySelector(
+"#clothTable tbody"
+);
+
+
+
+/* =========================
+   LOAD PRODUCTS
+========================= */
+
+async function loadProducts(){
+
+tableBody.innerHTML = "";
+
+const res =
+await fetch("/api/products");
+
+const products =
+await res.json();
+
+
+
+if(products.length === 0){
+
+tableBody.innerHTML = `
+
+<tr>
+
+<td data-label="Image">
+No image
+</td>
+
+<td data-label="Title">
+—
+</td>
+
+<td data-label="Description">
+—
+</td>
+
+<td data-label="Price">
+—
+</td>
+
+<td data-label="Size">
+—
+</td>
+
+<td data-label="Category">
+—
+</td>
+
+<td data-label="Actions">
+—
+</td>
+
+</tr>
+
+`;
+
+return;
+
+}
+
+
+
+products.forEach(product => {
+
+const row = document.createElement("tr");
+
+row.innerHTML = `
+
+<td data-label="Image">
+
+<img
+src="${product.image}"
+style="
+width:70px;
+height:70px;
+object-fit:cover;
+border-radius:6px;
+border:1px solid #6e4a13;
+">
+
+</td>
+
+<td data-label="Title">
+${product.title}
+</td>
+
+<td data-label="Description" style="display: flex; gap: 30px;">
+${product.description}
+</td>
+
+<td data-label="Price">
+${product.price}
+</td>
+
+<td data-label="Size">
+${product.sizes}
+</td>
+
+<td data-label="Category">
+${product.section}
+</td>
+
+<td data-label="Actions">
+
+<button
+class="action-btn delete-btn"
+data-id="${product._id}"
+>
+
+Delete <i class="fa fa-trash"></i>
+
+</button>
+
+</td>
+
+`;
+
+tableBody.appendChild(row);
+
+});
+
+}
+
+
+
+/* =========================
+   UPLOAD PRODUCT
+========================= */
+
+form.onsubmit = async(e) => {
+
+e.preventDefault();
+
+let data =
+new FormData(form);
+
+const res =
+await fetch(
+"/api/products",
+{
+method:"POST",
+body:data
+}
+);
+
+const result =
+await res.json();
+
+if(result.success){
+
+alert("Uploaded Successfully");
+
+form.reset();
+
+loadProducts();
+
+}
+
+else{
+
+alert("Upload Failed");
+
+}
+
+};
+
+
+
+/* =========================
+   DELETE PRODUCT
+========================= */
+
+document.addEventListener(
+"click",
+async(e)=>{
+
+const btn =
+e.target.closest(".delete-btn");
+
+if(!btn) return;
+
+const id =
+btn.dataset.id;
+
+const confirmDelete =
+confirm(
+"Delete this product?"
+);
+
+if(!confirmDelete) return;
+
+const res =
+await fetch(
+
+`/api/products/${id}`,
+
+{
+method:"DELETE"
+}
+
+);
+
+const result =
+await res.json();
+
+if(result.success){
+
+alert("Deleted Successfully");
+
+loadProducts();
+
+}
+
+else{
+
+alert("Delete Failed");
+
+}
+
+});
+
+
+
+/* =========================
+   INITIAL LOAD
+========================= */
+
+loadProducts();
+
+const CORRECT_PASSWORD = "ceomddeluxewears";
+
+function checkPassword() {
+  const input = document.getElementById("passwordInput").value;
+  const error = document.getElementById("errorMsg");
+
+  if (input === CORRECT_PASSWORD) {
+    document.getElementById("lockScreen").style.display = "none";
+  } else {
+    error.innerText = "Wrong password. Try again.";
+  }
+}
+
+</script>
+</body>
+</html>
