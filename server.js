@@ -62,12 +62,11 @@ app.post("/api/products", upload.single("image"), async (req, res) => {
     const fileName = Date.now() + "-" + req.file.originalname;
 
     const params = {
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: fileName,
-      Body: req.file.buffer,
-      ContentType: req.file.mimetype,
-      ACL: "public-read"
-    };
+  Bucket: process.env.S3_BUCKET_NAME,
+  Key: fileName,
+  Body: req.file.buffer,
+  ContentType: req.file.mimetype
+};
 
     const uploadResult = await s3.upload(params).promise();
 
