@@ -4,7 +4,7 @@
   "engines": {
   "node": "18.x"
 },
-  "main": "product.js",
+  "main": "server.js",
   "dependencies": {
     "aws-sdk": "^2.1693.0",
     "cors": "^2.8.6",
